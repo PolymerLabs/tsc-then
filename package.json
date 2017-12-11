@@ -1,0 +1,27 @@
+{
+  "name": "tsc-then",
+  "version": "1.0.0",
+  "description": "Run tsc -w, then another command after.",
+  "bin": {
+    "tsc-then": "bin/tsc-then.js"
+  },
+  "scripts": {
+    "prepublishOnly": "tsc"
+  },
+  "files": [
+    "LICENSE",
+    "lib/",
+    "custom_typings/",
+    "bin/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PolymerLabs/tsc-then.git"
+  },
+  "license": "BSD-3-Clause",
+  "author": "",
+  "dependencies": {
+    "@types/node": "^8.0.53",
+    "semver": "^5.4.1"
+  }
+}
