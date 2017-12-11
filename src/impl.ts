@@ -10,7 +10,7 @@
 
 import { spawn } from 'child_process';
 
-const argv = process.argv.slice(2);
+const argv = process.argv.slice(3);
 
 const child = spawn('tsc', ['-w']);
 
