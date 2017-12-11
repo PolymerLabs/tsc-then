@@ -50,6 +50,9 @@ async function runResponseCommand() {
     responseCommand.stdout.on('data', (chunk) => {
       process.stdout.write(chunk);
     });
+    responseCommand.stderr.on('data', (chunk) => {
+      process.stderr.write(chunk);
+    });
     responseCommand.on('exit', () => {
       resolve();
     })
