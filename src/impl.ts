@@ -25,7 +25,7 @@ let buffer = '';
 const marker = `Compilation complete. Watching for file changes.`
 child.stdout.setEncoding('utf8');
 child.stdout.on('data', (chunk) => {
-  process.stdout.write(chunk);
+  // process.stdout.write(chunk);
   buffer += chunk;
   while (true) {
     let index = buffer.indexOf(marker);
