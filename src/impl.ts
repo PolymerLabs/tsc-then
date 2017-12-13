@@ -12,7 +12,8 @@ import { spawn } from 'child_process';
 
 const argv = process.argv.slice(3);
 
-const child = spawn('tsc', ['-w'], { shell: true, cwd: process.cwd(), hideWindows: true });
+const options = { shell: true, cwd: process.cwd(), hideWindows: true };
+const child = spawn('tsc', ['-w'], options);
 child.on('exit', (code, signal) => {
   console.error(`tsc exited with exit code: ${code}`);
   if (signal) {
@@ -51,7 +52,8 @@ async function runResponseCommand() {
   }
   running = new Promise((resolve) => {
     console.log(`\ntsc-then: Running ${argv.join(' ')}\n`);
-    const responseCommand = spawn(argv[0], argv.slice(1), { shell: true, cwd: process.cwd(), hideWindows: true });
+    const options = { shell: true, cwd: process.cwd(), hideWindows: true };
+    const responseCommand = spawn(argv[0], argv.slice(1), options);
     responseCommand.stdout.setEncoding('utf8');
     responseCommand.stdout.on('data', (chunk) => {
       process.stdout.write(chunk);
