@@ -12,13 +12,19 @@ import { spawn } from 'child_process';
 
 const argv = process.argv.slice(3);
 
-const child = spawn('tsc', ['-w']);
+const child = spawn('tsc', ['-w'], { shell: true, cwd: process.cwd(), hideWindows: true });
+child.on('exit', (code, signal) => {
+  console.error(`tsc exited with exit code: ${code}`);
+  if (signal) {
+    console.error(`signal: ${signal}`);
+  }
+});
 
 let buffer = '';
 const marker = `Compilation complete. Watching for file changes.`
 child.stdout.setEncoding('utf8');
 child.stdout.on('data', (chunk) => {
-  // process.stdout.write(chunk);
+  process.stdout.write(chunk);
   buffer += chunk;
   while (true) {
     let index = buffer.indexOf(marker);
@@ -45,7 +51,7 @@ async function runResponseCommand() {
   }
   running = new Promise((resolve) => {
     console.log(`\ntsc-then: Running ${argv.join(' ')}\n`);
-    const responseCommand = spawn(argv[0], argv.slice(1));
+    const responseCommand = spawn(argv[0], argv.slice(1), { shell: true, cwd: process.cwd(), hideWindows: true });
     responseCommand.stdout.setEncoding('utf8');
     responseCommand.stdout.on('data', (chunk) => {
       process.stdout.write(chunk);
@@ -55,7 +61,7 @@ async function runResponseCommand() {
     });
     responseCommand.on('exit', () => {
       resolve();
-    })
+    });
   });
   await running;
   console.log('\ntsc-then: command finished\n')
