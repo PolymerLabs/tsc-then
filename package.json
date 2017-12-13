@@ -1,6 +1,6 @@
 {
   "name": "tsc-then",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Run tsc -w, then another command after.",
   "bin": {
     "tsc-then": "bin/tsc-then.js"
