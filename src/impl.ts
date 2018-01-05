@@ -10,39 +10,83 @@
 
 import { spawn } from 'child_process';
 
-const argv = process.argv.slice(3);
+const separatorIndex = process.argv.indexOf('--');
 
-const options = { shell: true, cwd: process.cwd(), hideWindows: true };
-const child = spawn('tsc', ['-w'], options);
-child.on('exit', (code, signal) => {
-  console.error(`tsc exited with exit code: ${code}`);
-  if (signal) {
-    console.error(`signal: ${signal}`);
-  }
-});
+function usage() {
+  console.error(`Usage: tsc-then [-p packageDir (maybe repeated)] -- command`);
+  process.exit(1);
+}
 
-let buffer = '';
-const marker = `Compilation complete. Watching for file changes.`
-child.stdout.setEncoding('utf8');
-child.stdout.on('data', (chunk) => {
-  // process.stdout.write(chunk);
-  buffer += chunk;
-  while (true) {
-    let index = buffer.indexOf(marker);
-    if (index === -1) {
-      break;
-    }
-    if (buffer.includes(`File change detected. Starting incremental compilation...`)) {
-      console.log('\ntsc-then: File change detected. Compiling...\n');
-    }
-    buffer = buffer.slice(index + marker.length);
-    runResponseCommand();
+if (separatorIndex === -1) {
+  usage();
+}
+
+const args = process.argv.slice(2, separatorIndex);
+
+if (args.length % 2 !== 0) {
+  usage();
+}
+
+const projectDirs = [];
+for (let i = 0; i < args.length; i++) {
+  if (i % 2 === 0 && args[i] !== '-p') {
+    usage();
   }
-});
+  if (i % 2 === 1) {
+    projectDirs.push(args[i]);
+  }
+}
+if (projectDirs.length === 0) {
+  projectDirs.push('');
+}
+
+const command = process.argv.slice(separatorIndex + 1);
+
+const initialCompilationPromises: Promise<void>[] = [];
+for (const projectDir of projectDirs) {
+  const options = { shell: true, cwd: process.cwd(), hideWindows: true };
+  const tscArgs = ['-w'];
+  if (projectDir !== '') {
+    tscArgs.push('-p', projectDir);
+  }
+  const child = spawn('tsc', tscArgs, options);
+  child.on('exit', (code, signal) => {
+    console.error(`tsc exited with exit code: ${code}`);
+    if (signal) {
+      console.error(`signal: ${signal}`);
+    }
+  });
+
+  let resolve: () => void;
+  initialCompilationPromises.push(new Promise<void>((r) => {resolve = r;}));
+  let buffer = '';
+  const marker = `Compilation complete. Watching for file changes.`
+  child.stdout.setEncoding('utf8');
+  child.stdout.on('data', (chunk) => {
+    // process.stdout.write(chunk);
+    buffer += chunk;
+    while (true) {
+      let index = buffer.indexOf(marker);
+      if (index === -1) {
+        break;
+      }
+      resolve!();
+      if (buffer.includes(`File change detected. Starting incremental compilation...`)) {
+        console.log('\ntsc-then: File change detected. Compiling...\n');
+      }
+      buffer = buffer.slice(index + marker.length);
+      runResponseCommand();
+    }
+  });
+}
+
+
 
 let running: Promise<void> | undefined = undefined;
 let nextRun = false;
+let firstRun = true;
 async function runResponseCommand() {
+  await Promise.all(initialCompilationPromises);
   if (running) {
     await running;
     if (nextRun) {
@@ -51,9 +95,13 @@ async function runResponseCommand() {
     nextRun = true;
   }
   running = new Promise((resolve) => {
-    console.log(`\ntsc-then: Running ${argv.join(' ')}\n`);
+    if (firstRun) {
+      console.log('tsc-then: Initial compilation complete!');
+      firstRun = false;
+    }
+    console.log(`\ntsc-then: Running ${command.join(' ')}\n`);
     const options = { shell: true, cwd: process.cwd(), hideWindows: true };
-    const responseCommand = spawn(argv[0], argv.slice(1), options);
+    const responseCommand = spawn(command[0], command.slice(1), options);
     responseCommand.stdout.setEncoding('utf8');
     responseCommand.stdout.on('data', (chunk) => {
       process.stdout.write(chunk);
