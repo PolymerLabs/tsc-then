@@ -60,7 +60,7 @@ for (const projectDir of projectDirs) {
   let resolve: () => void;
   initialCompilationPromises.push(new Promise<void>((r) => {resolve = r;}));
   let buffer = '';
-  const marker = `Compilation complete. Watching for file changes.`
+  const marker = `. Watching for file changes.`
   child.stdout.setEncoding('utf8');
   child.stdout.on('data', (chunk) => {
     // process.stdout.write(chunk);
